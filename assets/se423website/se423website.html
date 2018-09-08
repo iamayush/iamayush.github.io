@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+
+<html>
+<title>SE423 Spring 2018 Project</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+<style>
+.center {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    width: 50%;
+
+}
+
+img {
+    image-orientation: from-image;
+}
+</style>
+<body>
+
+<!-- Navbar (sit on top) -->
+<div class="w3-top">
+  <div class="w3-bar w3-white w3-wide w3-padding w3-card">
+    <a href="#home" class="w3-bar-item w3-button"><b>SE 423: </b> Mechatronics, Spring 2018</a>
+    <!-- Float links to the right. Hide them on small screens -->
+    <div class="w3-right w3-hide-small">
+      <a href="#description" class="w3-bar-item w3-button">Objective</a>
+      <a href="#approach" class="w3-bar-item w3-button">Approach</a>
+      <a href="#team" class="w3-bar-item w3-button">Team</a>
+      <a href="#video" class="w3-bar-item w3-button">Video</a>
+      <a href="#code" class="w3-bar-item w3-button">Code</a>
+    </div>
+  </div>
+</div>
+
+<!-- Header -->
+<header class="w3-display-container w3-content w3-wide" style="max-width:1500px;" id="home">
+  <center><img class="w3-image" src="https://ise.illinois.edu/undergraduate/images/robot.jpg" alt="Robot" width="500" height="100"></center>
+  <div class="w3-display-middle w3-margin-top w3-center">
+    <h1 class="w3-xxlarge w3-text-white"><span class="w3-padding w3-black w3-opacity-min"><b>SE</b></span> <span class="w3-hide-small w3-text-light-grey">423</span></h1>
+  </div>
+</header>
+
+<!-- Page content -->
+<div class="w3-content w3-padding" style="max-width:1564px">
+
+  <div class="w3-container w3-padding-1" id="description">
+    <h3 class="w3-border-bottom w3-border-light-grey w3-padding-16">Objective</h3>
+    <p>The goal of this project is to program our robot to navigate to five different (x, y) points in their numbered order.
+Along the way to these five points locate and imaginatively “spray with herbicide” at least two of the five brightly colored
+"weeds" dispersed in the course and avoid the obstacles in your robot’s path. Once all five points have been reached, if
+needed we continue locating and spraying weeds and then report the number of pink weeds found at the pink reporting
+circle and the number of blue weeds found at the blue reporting circle. An image of a possible map with the compulsory waypoints is given below: 
+    </p>
+    <div>
+    
+    <!-- <img class="center w3-image" src="https://preview.ibb.co/kJs6PS/map.png" alt="map" border="0"> -->
+      <img class="center w3-image" src="map.png" alt="map" border="0">
+      
+    </div>
+
+  </div>
+
+  <div class="w3-content w3-padding" style="max-width:1564px">
+
+  <div class="w3-container w3-padding-16" id="approach">
+    <h3 class="w3-border-bottom w3-border-light-grey w3-padding-16">Approach</h3>
+    
+    
+
+    <h5 class="w3-border-light-grey w3-padding-8">Path plan</h5>
+    <p>The team decided to use A* algorithm for path planning. The LADAR on the robot detects obstacles and updates the map accordingly. A* is then used to plan path to reach from one way point to another. However, the robot dismisses A* in two situations. First situation is when the robot is outside the arena, the robot is programmed to go directly to waypoints as no obstacle is expected there. The second situation is when the robot finds a ‘weed’ using its camera. The weed detection and ‘extermination’ is discussed in a later segment. Finally, the A* algorithm was modified to create a ‘virtual wall’ in the center of the arena to force the robot to move along the boundary if possible. This was implemented by adding a high positive penalty term to the cost (heuristic distance + distance travelled from start) for central grid cells. This strategy enabled the robot to explore more regions for exterminating all weeds.
+
+    </p>
+    <h5 class="w3-border-light-grey w3-padding-8">Weed detection</h5>
+    <p>The team utilized a standard RGB camera to detect the blue and pink weeds that needed to be exterminated. The system was first trained in order to detect these weeds by determining an adequate hue, saturation, and value such that only the colors of the weeds would be detected and nothing else such as the surrounding walls using a Matlab script provided by Prof. Block. These values were used in a color vision detection algorithm that was ran every 20 milliseconds to search for color within the field of view of the robot.  This algorithm looped through all of the pixels in the image and yielded useful information such as the location of the pixel centroid of the largest object as well as the number of pixels in that object, and the process was alternated every time looking for pink or looking for blue.  Half of the pixels of the image from the top were not used in the calculation to minimize the likelihood of detecting a person or object outside of the arena, and 5 pixels were cut-off from the remaining sides to account for damaged pixels around the edges of the camera. The distance from the robot to the weed when the weed was directly in front of the robot was determined empirically based off of the pixel centroid by placing the weeds at different distances and modeling the data points to a cubic function.  All of this was combined to perform the detection and extermination of the weeds. While the robot is performing A*, if the color vision algorithm detects a color centroid with a pixel count large enough, the robot will first stop performing A* and will center itself on the weed by turning until the centroid of the weed is within a small tolerance of the center of the camera , which ensures that the weed is along the same axis as the robot so it can be given the same coordinate. The distance away the weed is from the robot is then calculated using the cubic function that was derived yielding the distance away from the weed. Once the location of the weed is in determined in the robot’s coordinate frame, a transform is performed to determine the location of the weed in the world frame. If the weed has not already been exterminated, the robot will dead-reckon with a velocity of .6 tiles per second to exterminate the weed. If the weed has already been exterminated, the robot will ignore the weed and then continue to A*. 
+
+    </p>
+     <h5 class="w3-border-light-grey w3-padding-8">LabVIEW</h5>
+    <p>The Labview VI for our robot has multiple components. On the front panel, the user sees a stop button, a display history button, the x and y coordinates of the robot and those of each pink and blue weed found, and a gridded arena. While the robot drives, the front panel displays the outline of the course and the location of the robot as well as the location of the obstacles and weeds. The weeds are displayed as pink and blue dots respectively, while the obstacles are drawn as lines when they are discovered by the robot. The x and y coordinates of the robot and those of the weeds are sent up to Labview directly. A conversion then takes place to translate those coordinates to the reference frame of the Labview VI. Similarly, the x and y coordinates of the center of an obstacle are sent up to Labview and converted to the Labview frame of reference. The obstacle center locations are then used to generate lines. For the case of the vertical obstacles, two vertical lines (one in each direction) are drawn fifty pixels from the center point in order to generate the two tile line defined as an obstacle. The same is performed for the horizontal lines. Lastly, two circles are displayed at the bottom of the program where the robot shows how many weeds of each color the robot detected. The figure below shows the Labview that was run during the contest.
+    </p>
+	<div>
+    
+    <!-- <img class="center w3-image" src="https://preview.ibb.co/kxOwPS/IMG_20180503_213829211.jpg" alt="labview" border="0"> -->
+      <img class="center w3-image" src="labview.jpg" alt="labview" border="0">
+      
+    </div>
+
+  </div>
+
+  <!-- About Section -->
+  <div class="w3-container w3-padding-16" id="team">
+    <h3 class="w3-border-bottom w3-border-light-grey w3-padding-16">Team</h3>
+    <p>
+    From left to right: Ken Cooley, Varun Jain, Dylan Charter, Ayush Sinha, Joshua Brooks
+    </p>
+    <div>
+    
+<!--     <img class="center w3-image" src="https://preview.ibb.co/jnuEB7/IMG_0520.jpg" alt="team" width="150" height="80">
+ -->      
+ <img class="center w3-image" src="team.jpg" alt="team" width="150" height="80">
+      
+    </div>
+  </div>
+
+  <div class="w3-container w3-padding-16" id="video">
+    <h3 class="w3-border-bottom w3-border-light-grey w3-padding-16">Video</h3>
+    <p>
+    A video of our final performance is embedded below. 
+    </p>
+    <div>
+    
+    ​<iframe width="750" height="400" src="https://www.youtube.com/embed/LVZ5wmUm8WI?rel=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+      
+      
+    </div>
+
+  </div>
+
+
+
+  <!-- Contact Section -->
+  <div class="w3-container w3-padding-32" id="code">
+    <h3 class="w3-border-bottom w3-border-light-grey w3-padding-16">Code</h3>
+    <a href="https://github.com/iamayush/MechatronicsProj_RoboCar"> SE423 - iamayush GitHub Repository </a>
+  </div>
+  
+<!-- End page content -->
+</div>
+
+
+<!-- Footer -->
+<footer class="w3-center w3-black w3-padding-16">
+  <p>Thanks for the help Dan! <a href="http://coecsl.ece.illinois.edu/ge423/" title="SE 423 website" target="_blank" class="w3-hover-text-green">SE 423 website</a></p>
+</footer>
+
+
+</body>
+</html>
